@@ -51,11 +51,7 @@ These files are then used to generate the simulated pseudorange and
 Doppler for the GPS satellites in view. This simulated range data is 
 then used to generate the digitized I/Q samples for the GPS signal.
 
-The bladeRF and ADALM-Pluto command line interface requires I/Q pairs stored as signed 
-16-bit integers, while the hackrf_transfer and gps-sdr-sim-uhd.py
-support signed bytes.
-
-HackRF, bladeRF and ADALM-Pluto require 2.6 MHz sample rate, while the USRP2 requires
+HackRF require 2.6 MHz sample rate, while the USRP2 requires
 2.5 MHz (an even integral decimator of 100 MHz).
 
 The simulation start time can be specified if the corresponding set of ephemerides
@@ -67,9 +63,6 @@ prevent the output file from getting too large.
 
 The output file size can be reduced by using "-b 1" option to store 
 four 1-bit I/Q samples into a single byte. 
-You can use [bladeplayer](https://github.com/osqzss/gps-sdr-sim/tree/master/player)
-for bladeRF to playback the compressed file.
-
 ```
 Usage: gps-sdr-sim [options]
 Options:
@@ -91,15 +84,15 @@ Options:
 The user motion can be specified in either dynamic or static mode:
 
 ```
-> gps-sdr-sim -e brdc3540.14n -u circle.csv
+> gps-sdr-sim -e brdc3540.14n -b 8 -u circle.csv 
 ```
 
 ```
-> gps-sdr-sim -e brdc3540.14n -g triumphv3.txt
+> gps-sdr-sim -e brdc3540.14n -b 8 -g triumphv3.txt
 ```
 
 ```
-> gps-sdr-sim -e brdc3540.14n -l 30.286502,120.032669,100
+> gps-sdr-sim -e brdc3540.14n -b 8 -l 30.286502,120.032669,100
 ```
 
 ### Transmitting the samples
@@ -107,67 +100,14 @@ The user motion can be specified in either dynamic or static mode:
 The TX port of a particular SDR platform is connected to the GPS receiver 
 under test through a DC block and a fixed 50-60dB attenuator.
 
-#### BladeRF:
-
-The simulated GPS signal file, named "gpssim.bin", can be loaded
-into the bladeRF for playback as shown below:
-
-```
-set frequency 1575.42M
-set samplerate 2.6M
-set bandwidth 2.5M
-set txvga1 -25
-cal lms
-cal dc tx
-tx config file=gpssim.bin format=bin
-tx start
-```
-
-You can also execute these commands via the `bladeRF-cli` script option as below:
-```
-> bladeRF-cli -s bladerf.script
-```
-
 #### HackRF:
 
 ```
 > hackrf_transfer -t gpssim.bin -f 1575420000 -s 2600000 -a 1 -x 0
 ```
 
-#### UHD supported devices (tested with USRP2 only):
-
-```
-> gps-sdr-sim-uhd.py -t gpssim.bin -s 2500000 -x 0
-```
-
-#### LimeSDR (in case of 1 Msps 1-bit file, to get full BaseBand dynamic and low RF power):
-
-```
-> limeplayer -s 1000000 -b 1 -d 2047 -g 0.1 < ../circle.1b.1M.bin
-```
-
-#### ADALM-Pluto (PlutoSDR):
-
-The ADALM-Pluto device is expected to have its network interface up and running and is accessible
-via "pluto.local" by default.
-
-Default settings:
-```
-> plutoplayer -t gpssim.bin
-```
-Set TX attenuation:
-```
-> plutoplayer -t gpssim.bin -a -30.0
-```
-Default -20.0dB. Applicable range 0.0dB to -80.0dB in 0.25dB steps.
-
-Set RF bandwidth:
-```
-> plutoplayer -t gpssim.bin -b 3.0
-```
-Default 3.0MHz. Applicable range 1.0MHz to 5.0MHz.
-
 ### License
 
 Copyright &copy; 2015-2018 Takuji Ebinuma  
 Distributed under the [MIT License](http://www.opensource.org/licenses/mit-license.php).
+Edited by Nicola Franceschinis
